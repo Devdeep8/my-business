@@ -69,11 +69,14 @@ services:
       - ../user-backend/.env.staging
     environment:
       NODE_ENV: staging
-      DB_WRITE_HOST: postgres
+      # Use the unique container names as hosts — the generic service names
+      # (postgres/redis) can resolve to OTHER projects' containers through the
+      # shared proxy network.
+      DB_WRITE_HOST: haannaa-staging-postgres
       DB_NAME: ${POSTGRES_DB:-haannaa-staging-db}
       DB_USERNAME: ${POSTGRES_USER:-postgres}
       DB_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in executor/.env.staging}
-      REDIS_HOST: redis
+      REDIS_HOST: haannaa-staging-redis
       REDIS_PASSWORD: ${REDIS_PASSWORD:?set REDIS_PASSWORD in executor/.env.staging}
       PORT: 3004
     depends_on:
@@ -105,11 +108,11 @@ services:
       - ../admin-backend/.env.staging
     environment:
       NODE_ENV: staging
-      DB_WRITE_HOST: postgres
+      DB_WRITE_HOST: haannaa-staging-postgres
       DB_NAME: ${POSTGRES_DB:-haannaa-staging-db}
       DB_USERNAME: ${POSTGRES_USER:-postgres}
       DB_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in executor/.env.staging}
-      REDIS_HOST: redis
+      REDIS_HOST: haannaa-staging-redis
       REDIS_PASSWORD: ${REDIS_PASSWORD:?set REDIS_PASSWORD in executor/.env.staging}
       PORT: 3006
     depends_on:
@@ -131,11 +134,11 @@ services:
       - ../admin-backend/.env.staging
     environment:
       NODE_ENV: staging
-      DB_WRITE_HOST: postgres
+      DB_WRITE_HOST: haannaa-staging-postgres
       DB_NAME: ${POSTGRES_DB:-haannaa-staging-db}
       DB_USERNAME: ${POSTGRES_USER:-postgres}
       DB_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in executor/.env.staging}
-      REDIS_HOST: redis
+      REDIS_HOST: haannaa-staging-redis
       REDIS_PASSWORD: ${REDIS_PASSWORD:?set REDIS_PASSWORD in executor/.env.staging}
     command: ["npm", "run", "worker"]
     depends_on:
