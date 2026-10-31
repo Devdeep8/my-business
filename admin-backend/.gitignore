@@ -107,3 +107,5 @@ Thumbs.db
 # Database / SQLite files
 *.sqlite
 *.db
+.env.staging
+!.env.staging.example
