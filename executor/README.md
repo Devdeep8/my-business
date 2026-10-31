@@ -81,3 +81,31 @@ Create one Vercel project per frontend and set its root directory to `user-front
 | `admin-frontend` | `https://admin-api.example.com` |
 
 Replace these sample URLs with the HTTPS domains configured on the reverse proxy, then redeploy so the build uses the new values. Use HTTPS frontend domains on the same parent site as their API domains (for example, `www.example.com` and `api.example.com`) so browser cookie authentication works with the current `SameSite=Lax` cookie policy. Set the matching frontend origin in each backend's `ALLOWED_ORIGIN`.
+
+## Staging deployment (`docker-compose.staging.yml`)
+
+Staging runs the same production images (`Dockerfile.production`) with `NODE_ENV=staging`, its **own** Postgres + Redis (separate volumes — demo data never touches production), and publishes only the user API through the host proxy at `https://dev-api.haannaa.com`. The admin API and worker stay on the internal network (no public domain yet). `NODE_ENV=staging` also enables the public directory API (`/api/v1/public/*`) and allows the demo seeders.
+
+On the staging server, after cloning the repo:
+
+```sh
+# 1. Point dev-api.haannaa.com (A record) at the server first.
+
+# 2. Create the env files from the examples and fill in real secrets
+cp executor/.env.staging.example executor/.env.staging
+cp user-backend/.env.staging.example user-backend/.env.staging
+cp admin-backend/.env.staging.example admin-backend/.env.staging
+# edit all three: set POSTGRES_PASSWORD, REDIS_PASSWORD, JWT secrets, ALLOWED_ORIGIN
+
+# 3. Build, start, migrate, and seed (100 demo businesses)
+cd executor
+make staging-setup
+```
+
+Useful commands: `make staging-logs s=user-backend`, `make staging-psql`, `make staging-down`.
+
+Smoke test once live:
+
+```sh
+curl 'https://dev-api.haannaa.com/api/v1/public/businesses?page=1&limit=10&category=salon'
+```

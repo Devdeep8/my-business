@@ -151,3 +151,39 @@ setup: check-docker build up setup-db install-frontends ## Fresh project setup: 
 
 .PHONY: reset
 reset: wipe-all setup ## Full reset: wipe volumes + images, then setup from scratch
+
+# ============================================================
+# STAGING (docker-compose.staging.yml — own DB/Redis, NODE_ENV=staging,
+# user API published via the host proxy at dev-api.haannaa.com)
+# ============================================================
+
+STAGING_ENV  = --env-file .env.staging
+STAGING_FILE = -f docker-compose.staging.yml
+
+.PHONY: staging-up
+staging-up: check-docker ## Build and start the whole staging stack
+	@$(COMPOSE) $(STAGING_ENV) $(STAGING_FILE) up -d --build --wait
+	@$(COMPOSE) $(STAGING_ENV) $(STAGING_FILE) ps
+
+.PHONY: staging-down
+staging-down: ## Stop the staging stack (volumes kept)
+	@$(COMPOSE) $(STAGING_ENV) $(STAGING_FILE) down --remove-orphans
+
+.PHONY: staging-logs
+staging-logs: ## Tail staging logs (all, or one: make staging-logs s=user-backend)
+	@$(COMPOSE) $(STAGING_ENV) $(STAGING_FILE) logs -f $(s)
+
+.PHONY: staging-migrate
+staging-migrate: check-docker ## Run pending migrations on staging (admin-backend)
+	@$(COMPOSE) $(STAGING_ENV) $(STAGING_FILE) run --rm admin-backend npm run db:migrate
+
+.PHONY: staging-seed
+staging-seed: check-docker ## Seed staging demo data (100 businesses — never in production)
+	@$(COMPOSE) $(STAGING_ENV) $(STAGING_FILE) run --rm admin-backend npm run db:seed
+
+.PHONY: staging-psql
+staging-psql: ## Open a psql console on the staging database
+	@$(COMPOSE) $(STAGING_ENV) $(STAGING_FILE) exec postgres psql -U $(DB_USER) -d haannaa-staging-db
+
+.PHONY: staging-setup
+staging-setup: staging-up staging-migrate staging-seed ## Full staging deploy: build, start, migrate, seed
