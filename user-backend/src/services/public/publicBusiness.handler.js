@@ -7,6 +7,34 @@ import Errors from '@src/errors/errorCodes.js';
 
 const { Business, Category, BusinessLink, Sequelize } = db;
 
+// Resolve a category slug (parent or leaf) to itself plus every descendant
+// category id, so a "business type" like food-dining matches all its leaves.
+const categorySubtreeIds = async (slug, traceId, transaction) => {
+  const root = await Category.findOne({
+    where: { slug, isActive: true },
+    attributes: ['id'],
+    transaction
+  });
+  if (!root) {
+    throw new AppError(Errors.NOT_FOUND, {
+      traceId, message: `Business type '${slug}' not found`
+    });
+  }
+
+  const ids = [root.id];
+  let frontier = [root.id];
+  while (frontier.length > 0) {
+    const children = await Category.findAll({
+      where: { parentId: frontier, isActive: true },
+      attributes: ['id'],
+      transaction
+    });
+    frontier = children.map((c) => c.id);
+    ids.push(...frontier);
+  }
+  return ids;
+};
+
 // Shape returned to external consumers — no owner ids, no review metadata.
 const publicView = (business, links = []) => ({
   id: business.id,
@@ -33,11 +61,12 @@ const publicView = (business, links = []) => ({
 export class ListPublicBusinessesHandler extends BaseHandler {
   /**
    * Published businesses with pagination, free-text search (name /
-   * description) and category filter (leaf category slug). Ordered by name
-   * for stable pagination.
+   * description), category filter (leaf category slug) and business-type
+   * filter (any category slug — parent or leaf — matching its subtree).
+   * Ordered by name for stable pagination.
    */
   async run () {
-    const { page = 1, limit = 10, search, category } = this.args;
+    const { page = 1, limit = 10, search, category, businessType } = this.args;
 
     const where = { status: 'published' };
     const term = String(search ?? '').trim();
@@ -51,6 +80,12 @@ export class ListPublicBusinessesHandler extends BaseHandler {
     const categoryWhere = { isActive: true };
     if (category) {
       categoryWhere.slug = String(category).trim();
+    } else if (businessType) {
+      // Subtree filter on the business's primary category
+      const subtreeIds = await categorySubtreeIds(
+        String(businessType).trim(), this.traceId, this.dbTransaction
+      );
+      categoryWhere.id = { [Sequelize.Op.in]: subtreeIds };
     }
 
     const { rows, count } = await Business.findAndCountAll({

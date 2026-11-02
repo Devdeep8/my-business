@@ -8,7 +8,10 @@ export const listPublicBusinessesSchema = {
       page: { type: 'integer', minimum: 1, default: 1 },
       limit: { type: 'integer', minimum: 1, maximum: 100, default: 10 },
       search: { type: 'string', maxLength: 255 },
-      category: { type: 'string', maxLength: 255 }
+      category: { type: 'string', maxLength: 255 },
+      // Business type = any category slug (parent like "food-dining" or leaf
+      // like "restaurant"); matches businesses in that category or its subtree
+      businessType: { type: 'string', maxLength: 255 }
     }
   }
 };
