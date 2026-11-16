@@ -30,23 +30,23 @@ export function DynamicField({ field, value, error, disabled, onChange }: Dynami
   const label = fieldLabel(field, lang);
   const help = fieldHelp(field, lang);
   const required = Boolean(field.validation?.required);
-  const invalid = Boolean(error);
 
+  const invalid = Boolean(error);
   const describedBy = help ? `${field.key}-help` : undefined;
   const errorId = error ? `${field.key}-error` : undefined;
 
   return (
     <div className="space-y-1.5">
-      <label htmlFor={field.key} className="block text-base font-bold text-slate-800">
+      <label htmlFor={field.key} className="block text-sm font-medium">
         {label}
-        {required ? <span className="ml-1 text-indigo-600">*</span> : null}
+        {required ? <span className="ml-0.5 text-angaar-600">*</span> : null}
         {!required && field.type !== "boolean" ? (
-          <span className="ml-2 text-sm font-normal text-slate-400">(optional)</span>
+          <span className="ml-1.5 text-xs font-normal text-ink-400">(optional)</span>
         ) : null}
       </label>
 
       {help ? (
-        <p id={describedBy} className="text-sm text-slate-500">
+        <p id={describedBy} className="text-xs text-ink-500">
           {help}
         </p>
       ) : null}
@@ -54,13 +54,16 @@ export function DynamicField({ field, value, error, disabled, onChange }: Dynami
       <FieldInput field={field} value={value} invalid={invalid} disabled={disabled} onChange={onChange} />
 
       {error ? (
-        <p id={errorId} className="text-sm font-medium text-red-600">
+        <p id={errorId} className="text-xs font-medium text-signal-danger">
           {error}
         </p>
       ) : null}
     </div>
   );
 }
+
+/** Shared chip classes for the option-style inputs (select / multi_select) */
+const chipClasses = (selected: boolean) => `pk-chip ${selected ? "pk-chip-on" : "pk-chip-off"}`;
 
 function FieldInput({
   field, value, invalid, disabled, onChange
@@ -71,10 +74,6 @@ function FieldInput({
   disabled?: boolean;
   onChange: (key: string, value: unknown) => void;
 }) {
-  const shared = invalid
-    ? "border-red-400 focus-visible:ring-red-300"
-    : "border-slate-300 focus-visible:ring-indigo-300";
-
   switch (field.type) {
     case "text":
     case "url":
@@ -87,7 +86,6 @@ function FieldInput({
           value={typeof value === "string" ? value : ""}
           disabled={disabled}
           aria-invalid={invalid}
-          className={shared}
           onChange={(e) => onChange(field.key, e.target.value)}
         />
       );
@@ -101,7 +99,6 @@ function FieldInput({
           value={value === null || value === undefined ? "" : String(value)}
           disabled={disabled}
           aria-invalid={invalid}
-          className={shared}
           onChange={(e) => onChange(field.key, e.target.value === "" ? null : Number(e.target.value))}
         />
       );
@@ -117,11 +114,7 @@ function FieldInput({
                 type="button"
                 disabled={disabled}
                 aria-pressed={selected}
-                className={`inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-semibold ${
-                  selected
-                    ? "border-indigo-600 bg-indigo-50 text-indigo-700"
-                    : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-                }`}
+                className={chipClasses(selected)}
                 onClick={() => onChange(field.key, selected ? null : option)}
               >
                 {option}
@@ -143,11 +136,7 @@ function FieldInput({
                 type="button"
                 disabled={disabled}
                 aria-pressed={selected}
-                className={`inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-semibold ${
-                  selected
-                    ? "border-indigo-600 bg-indigo-50 text-indigo-700"
-                    : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-                }`}
+                className={chipClasses(selected)}
                 onClick={() =>
                   onChange(
                     field.key,
@@ -164,7 +153,7 @@ function FieldInput({
 
     case "boolean":
       return (
-        <div className="flex gap-2">
+        <div className="inline-flex rounded-(--radius-field) border border-ink-200 bg-white p-0.5">
           {[true, false].map((yes) => {
             const selected = value === yes;
             return (
@@ -173,16 +162,14 @@ function FieldInput({
                 type="button"
                 disabled={disabled}
                 aria-pressed={selected}
-                className={`inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border-2 px-4 text-sm font-semibold ${
+                className={`h-8 min-w-16 rounded-md px-3.5 text-sm font-medium transition-colors ${
                   selected
-                    ? yes
-                      ? "border-emerald-600 bg-emerald-50 text-emerald-700"
-                      : "border-slate-500 bg-slate-100 text-slate-700"
-                    : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                    ? "bg-angaar-600 text-white"
+                    : "text-ink-600 hover:bg-ink-100"
                 }`}
                 onClick={() => onChange(field.key, yes)}
               >
-                {yes ? (uiIsHindi() ? "हाँ" : "Yes") : uiIsHindi() ? "नहीं" : "No"}
+                {yes ? (langIsHindi() ? "हाँ" : "Yes") : langIsHindi() ? "नहीं" : "No"}
               </button>
             );
           })}
@@ -198,7 +185,6 @@ function FieldInput({
           value={typeof value === "string" ? value : value ? JSON.stringify(value) : ""}
           disabled={disabled}
           aria-invalid={invalid}
-          className={shared}
           onChange={(e) => onChange(field.key, e.target.value)}
         />
       );
@@ -206,6 +192,6 @@ function FieldInput({
 }
 
 // Yes/No labels follow the UI language (plain helper, not a hook)
-function uiIsHindi() {
+function langIsHindi() {
   return typeof window !== "undefined" && localStorage.getItem("app-language") === "hi";
 }

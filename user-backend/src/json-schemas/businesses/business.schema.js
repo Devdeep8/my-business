@@ -74,3 +74,62 @@ export const deleteBusinessLinkSchema = {
     }
   }
 };
+
+export const reorderBusinessLinksSchema = {
+  bodySchema: {
+    type: 'object',
+    required: ['ids'],
+    properties: {
+      ids: {
+        type: 'array',
+        minItems: 1,
+        maxItems: 20,
+        items: { type: 'string', format: 'uuid' }
+      }
+    }
+  }
+};
+
+const mediaKind = {
+  type: 'string',
+  enum: ['logo', 'cover', 'photo', 'video']
+};
+
+export const createBusinessMediaSchema = {
+  bodySchema: {
+    type: 'object',
+    required: ['url'],
+    properties: {
+      url: { type: 'string', maxLength: 500 },
+      kind: mediaKind,
+      altText: { type: 'string', maxLength: 255 }
+    }
+  }
+};
+
+export const updateBusinessMediaSchema = {
+  paramsSchema: {
+    type: 'object',
+    required: ['id'],
+    properties: {
+      id: { type: 'string', format: 'uuid' }
+    }
+  },
+  bodySchema: {
+    type: 'object',
+    properties: {
+      kind: mediaKind,
+      altText: { type: 'string', maxLength: 255, nullable: true }
+    }
+  }
+};
+
+export const deleteBusinessMediaSchema = {
+  paramsSchema: {
+    type: 'object',
+    required: ['id'],
+    properties: {
+      id: { type: 'string', format: 'uuid' }
+    }
+  }
+};

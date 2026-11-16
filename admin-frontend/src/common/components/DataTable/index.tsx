@@ -75,7 +75,7 @@ function DataTableCell<T>({ column, row }: { column: DataColumn<T>; row: T }) {
     case "actions":
       return (
         <div className={cn("flex gap-1", column.align === "right" && "justify-end")}>
-          {column.actions.map((action) => (
+          {column.actions.filter((action) => !action.hidden?.(row)).map((action) => (
             <Button
               key={action.key}
               variant="ghost"

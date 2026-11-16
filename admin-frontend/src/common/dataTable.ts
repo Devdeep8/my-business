@@ -30,6 +30,8 @@ export type DataAction<T> = {
   label: (row: T) => string;
   onClick: (row: T) => void;
   destructive?: boolean;
+  /** Hide the action for a given row (e.g. status-dependent) */
+  hidden?: (row: T) => boolean;
 };
 
 /**

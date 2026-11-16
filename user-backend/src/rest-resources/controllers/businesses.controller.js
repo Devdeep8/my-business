@@ -7,8 +7,15 @@ import {
   SubmitMyBusinessHandler,
   ListMyBusinessLinksHandler,
   CreateBusinessLinkHandler,
-  DeleteBusinessLinkHandler
+  DeleteBusinessLinkHandler,
+  ReorderMyBusinessLinksHandler
 } from '@src/services/businesses/business.handler.js';
+import {
+  ListMyBusinessMediaHandler,
+  CreateBusinessMediaHandler,
+  UpdateBusinessMediaHandler,
+  DeleteBusinessMediaHandler
+} from '@src/services/businesses/businessMedia.handler.js';
 
 class BusinessesController {
   /** POST /api/v1/businesses — create my business (onboarding) */
@@ -51,6 +58,36 @@ class BusinessesController {
   static async deleteLink(req, res, next) {
     const result = await DeleteBusinessLinkHandler.execute({ ...req.params }, req.context);
     sendResponse({ req, res, next }, result, 'Link deleted successfully');
+  }
+
+  /** PATCH /api/v1/businesses/me/links/order — drag-and-drop reorder */
+  static async reorderLinks(req, res, next) {
+    const result = await ReorderMyBusinessLinksHandler.execute({ ...req.body }, req.context);
+    sendResponse({ req, res, next }, result, 'Links reordered successfully');
+  }
+
+  /** GET /api/v1/businesses/me/media — my media items */
+  static async listMyMedia(req, res, next) {
+    const result = await ListMyBusinessMediaHandler.execute({}, req.context);
+    sendResponse({ req, res, next }, result, 'Media retrieved successfully');
+  }
+
+  /** POST /api/v1/businesses/me/media — attach an uploaded image URL */
+  static async addMedia(req, res, next) {
+    const result = await CreateBusinessMediaHandler.execute({ ...req.body }, req.context);
+    sendResponse({ req, res, next }, result, 'Media added successfully');
+  }
+
+  /** PATCH /api/v1/businesses/me/media/:id — change kind / alt text */
+  static async updateMedia(req, res, next) {
+    const result = await UpdateBusinessMediaHandler.execute({ ...req.params, ...req.body }, req.context);
+    sendResponse({ req, res, next }, result, 'Media updated successfully');
+  }
+
+  /** DELETE /api/v1/businesses/me/media/:id — remove a media item */
+  static async deleteMedia(req, res, next) {
+    const result = await DeleteBusinessMediaHandler.execute({ ...req.params }, req.context);
+    sendResponse({ req, res, next }, result, 'Media deleted successfully');
   }
 }
 

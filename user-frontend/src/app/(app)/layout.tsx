@@ -22,14 +22,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   // Hold render until the session status is known (no login-page flash)
   if (!hydrated || !authenticated) {
     return (
-      <div className="flex min-h-dvh items-center justify-center bg-slate-50 text-stone-400">
-        <Loader2 className="size-10 animate-spin" />
+      <div className="flex min-h-dvh flex-1 items-center justify-center text-ink-400">
+        <Loader2 className="size-8 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-dvh bg-slate-50">
+    <div className="flex min-h-dvh flex-1 flex-col">
       <AppHeader />
       {children}
     </div>

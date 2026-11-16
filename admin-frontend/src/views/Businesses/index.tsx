@@ -2,11 +2,14 @@
 
 // src/views/Businesses/index.tsx
 // Business submissions queue. Table/filter UI is config from the hook plus
-// the common DataTable/FilterBar; this view only owns the review dialog.
+// the common DataTable/FilterBar; this view owns quick-approve from the row
+// and the full review dialog.
 import { useCallback, useState } from "react";
+import { toast } from "sonner";
 import { DataTable } from "@/common/components/DataTable";
 import { FilterBar } from "@/common/components/FilterBar";
-import type { AdminBusiness } from "@/services/businesses.service";
+import { businessesService, type AdminBusiness } from "@/services/businesses.service";
+import { ApiError } from "@/services/api.service";
 import { BusinessReviewDialog } from "@/views/Businesses/components/BusinessReviewDialog";
 import { BUSINESS_FILTERS, useBusinessColumns, useBusinesses } from "@/views/Businesses/hooks/useBusinesses";
 
@@ -15,9 +18,31 @@ export function Businesses () {
     useBusinesses();
 
   const [reviewing, setReviewing] = useState<AdminBusiness | null>(null);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
   const openReview = useCallback((business: AdminBusiness) => setReviewing(business), []);
 
-  const columns = useBusinessColumns({ onReview: openReview });
+  // Quick approve from the row — one click, toast feedback, list refresh
+  const quickApprove = useCallback(
+    async (business: AdminBusiness) => {
+      setApprovingId(business.id);
+      try {
+        await businessesService.approve(business.id);
+        toast.success(`${business.name} approved`, {
+          description: "The business profile is now published."
+        });
+        await refresh();
+      } catch (err) {
+        toast.error("Could not approve the business", {
+          description: err instanceof ApiError ? err.message : "Please try again."
+        });
+      } finally {
+        setApprovingId(null);
+      }
+    },
+    [refresh]
+  );
+
+  const columns = useBusinessColumns({ onReview: openReview, onApprove: quickApprove });
 
   return (
     <div className="mx-auto max-w-5xl space-y-4">
@@ -35,7 +60,7 @@ export function Businesses () {
         columns={columns}
         data={items}
         rowKey={(business) => business.id}
-        loading={loading}
+        loading={loading || approvingId !== null}
         error={error}
         onRetry={refresh}
         emptyMessage="No businesses match these filters."

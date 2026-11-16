@@ -41,4 +41,16 @@ router.get(
   asyncHandler(PublicController.getBusiness)
 );
 
+/**
+ * @route   GET /api/v1/public/categories
+ * @desc    Active category tree (public-safe fields) for directory filters
+ * @access  Public (no auth; rate limited)
+ */
+router.get(
+  '/categories',
+  contextMiddleware(false),
+  rateLimitMiddleware({ points: 60, duration: 60, keyPrefix: 'public_categories' }),
+  asyncHandler(PublicController.listCategories)
+);
+
 export default router;

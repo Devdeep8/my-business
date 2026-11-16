@@ -8,7 +8,7 @@ import blogsRoutes from "./blogs.routes.js";
 import categoriesRoutes from "./categories.routes.js";
 import businessesRoutes from "./businesses.routes.js";
 import publicRoutes from "./public.routes.js";
-import config from "@configs/app.config.js";
+import uploadsRoutes from "./uploads.routes.js";
 const router = Router();
 
 // Register all v1 routes here.
@@ -19,10 +19,9 @@ router.use("/demo", demoRoutes);
 router.use("/blogs", blogsRoutes);
 router.use("/categories", categoriesRoutes);
 router.use("/businesses", businessesRoutes);
+router.use("/uploads", uploadsRoutes);
 
-// Public directory API for external apps — never mounted in production.
-if (config.get("env") !== "production") {
-  router.use("/public", publicRoutes);
-}
+// Public directory API — powers /browse and /b/[slug]; rate limited per route.
+router.use("/public", publicRoutes);
 
 export default router;

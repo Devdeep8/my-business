@@ -9,7 +9,11 @@ import {
   createBusinessSchema,
   updateMyBusinessSchema,
   createBusinessLinkSchema,
-  deleteBusinessLinkSchema
+  deleteBusinessLinkSchema,
+  reorderBusinessLinksSchema,
+  createBusinessMediaSchema,
+  updateBusinessMediaSchema,
+  deleteBusinessMediaSchema
 } from '@src/json-schemas/businesses/business.schema.js';
 
 const router = Router();
@@ -101,6 +105,70 @@ router.delete(
   isUserAuthenticated(),
   requestValidationMiddleware(deleteBusinessLinkSchema),
   asyncHandler(BusinessesController.deleteLink)
+);
+
+/**
+ * @route   PATCH /api/v1/businesses/me/links/order
+ * @desc    Rewrite link order from an explicit id list (drag-and-drop)
+ * @access  Private (write — transaction)
+ */
+router.patch(
+  '/me/links/order',
+  contextMiddleware(true),
+  isUserAuthenticated(),
+  requestValidationMiddleware(reorderBusinessLinksSchema),
+  asyncHandler(BusinessesController.reorderLinks)
+);
+
+/**
+ * @route   GET /api/v1/businesses/me/media
+ * @desc    My media items (cover/logo first, then photos by order)
+ * @access  Private (read — no transaction)
+ */
+router.get(
+  '/me/media',
+  contextMiddleware(false),
+  isUserAuthenticated(),
+  asyncHandler(BusinessesController.listMyMedia)
+);
+
+/**
+ * @route   POST /api/v1/businesses/me/media
+ * @desc    Attach an uploaded image URL to my profile
+ * @access  Private (write — transaction)
+ */
+router.post(
+  '/me/media',
+  contextMiddleware(true),
+  isUserAuthenticated(),
+  requestValidationMiddleware(createBusinessMediaSchema),
+  asyncHandler(BusinessesController.addMedia)
+);
+
+/**
+ * @route   PATCH /api/v1/businesses/me/media/:id
+ * @desc    Change a media item's kind (set as cover/logo) or alt text
+ * @access  Private (write — transaction)
+ */
+router.patch(
+  '/me/media/:id',
+  contextMiddleware(true),
+  isUserAuthenticated(),
+  requestValidationMiddleware(updateBusinessMediaSchema),
+  asyncHandler(BusinessesController.updateMedia)
+);
+
+/**
+ * @route   DELETE /api/v1/businesses/me/media/:id
+ * @desc    Remove a media item (best-effort Cloudinary cleanup)
+ * @access  Private (write — transaction)
+ */
+router.delete(
+  '/me/media/:id',
+  contextMiddleware(true),
+  isUserAuthenticated(),
+  requestValidationMiddleware(deleteBusinessMediaSchema),
+  asyncHandler(BusinessesController.deleteMedia)
 );
 
 export default router;

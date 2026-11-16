@@ -4,7 +4,7 @@
 // Business submissions queue = filter config + column config + a thin wrapper
 // around useDataTable (same pattern as views/AppUsers).
 import { useCallback } from "react";
-import { IconEye } from "@tabler/icons-react";
+import { IconCircleCheck, IconEye } from "@tabler/icons-react";
 import { businessesService, type AdminBusiness } from "@/services/businesses.service";
 import { useDataTable } from "@/common/hooks/useDataTable";
 import type { DataColumn, FilterConfig } from "@/common/dataTable";
@@ -32,9 +32,11 @@ export const BUSINESS_FILTERS: FilterConfig[] = [
 
 type BusinessColumnHandlers = {
   onReview: (business: AdminBusiness) => void;
+  /** Quick approve straight from the row — publish without opening the dialog */
+  onApprove: (business: AdminBusiness) => void;
 };
 
-export function useBusinessColumns({ onReview }: BusinessColumnHandlers): DataColumn<AdminBusiness>[] {
+export function useBusinessColumns({ onReview, onApprove }: BusinessColumnHandlers): DataColumn<AdminBusiness>[] {
   return [
     {
       key: "name",
@@ -83,7 +85,7 @@ export function useBusinessColumns({ onReview }: BusinessColumnHandlers): DataCo
       key: "actions",
       header: "Actions",
       align: "right",
-      width: "w-20",
+      width: "w-24",
       type: "actions",
       actions: [
         {
@@ -91,6 +93,14 @@ export function useBusinessColumns({ onReview }: BusinessColumnHandlers): DataCo
           icon: IconEye,
           label: (business) => `Review ${business.name}`,
           onClick: onReview
+        },
+        {
+          key: "approve",
+          icon: IconCircleCheck,
+          label: (business) => `Approve and publish ${business.name}`,
+          onClick: onApprove,
+          // Already live — nothing to approve
+          hidden: (business) => business.status === "published"
         }
       ]
     }

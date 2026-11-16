@@ -27,6 +27,20 @@ if (!fs.existsSync('/.dockerenv')) {
   }
 }
 
+// Accept Cloudinary's standard CLOUDINARY_URL as a convenience for local
+// setup. Explicit per-field environment variables take precedence.
+if (process.env.CLOUDINARY_URL) {
+  try {
+    const cloudinaryUrl = new URL(process.env.CLOUDINARY_URL);
+    if (cloudinaryUrl.protocol !== 'cloudinary:') throw new Error('Invalid protocol');
+    process.env.CLOUDINARY_CLOUD_NAME ||= cloudinaryUrl.hostname;
+    process.env.CLOUDINARY_API_KEY ||= decodeURIComponent(cloudinaryUrl.username);
+    process.env.CLOUDINARY_API_SECRET ||= decodeURIComponent(cloudinaryUrl.password);
+  } catch {
+    throw new Error('CLOUDINARY_URL must use cloudinary://<api-key>:<api-secret>@<cloud-name>');
+  }
+}
+
 const config = convict({
   app: {
     name: {
@@ -188,6 +202,27 @@ const config = convict({
       format: String,
       default: '',
       env: 'REDIS_PASSWORD'
+    }
+  },
+
+  cloudinary: {
+    cloudName: {
+      doc: 'Cloudinary cloud name',
+      format: String,
+      default: '',
+      env: 'CLOUDINARY_CLOUD_NAME'
+    },
+    apiKey: {
+      doc: 'Cloudinary API key',
+      format: String,
+      default: '',
+      env: 'CLOUDINARY_API_KEY'
+    },
+    apiSecret: {
+      doc: 'Cloudinary API secret',
+      format: String,
+      default: '',
+      env: 'CLOUDINARY_API_SECRET'
     }
   },
 

@@ -2,7 +2,8 @@
 import { sendResponse } from '@src/helpers/response.helpers.js';
 import {
   ListPublicBusinessesHandler,
-  GetPublicBusinessHandler
+  GetPublicBusinessHandler,
+  ListPublicCategoriesHandler
 } from '@src/services/public/publicBusiness.handler.js';
 
 class PublicController {
@@ -16,6 +17,12 @@ class PublicController {
   static async getBusiness(req, res, next) {
     const result = await GetPublicBusinessHandler.execute({ ...req.params }, req.context);
     sendResponse({ req, res, next }, result, 'Business retrieved successfully');
+  }
+
+  /** GET /api/v1/public/categories — category tree for directory filters */
+  static async listCategories(req, res, next) {
+    const result = await ListPublicCategoriesHandler.execute({}, req.context);
+    sendResponse({ req, res, next }, result, 'Categories retrieved successfully');
   }
 }
 

@@ -1,35 +1,22 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Yatra_One, Anton, Mukta } from "next/font/google";
+import { Inter, Mukta } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { LanguageProvider } from "@/lib/i18n";
 
-// Operator app: Inter — the modern UI face
+// Operator app: Inter for Latin, Noto Sans Devanagari for Hindi — one
+// voice, bilingual.
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
   display: "swap",
 });
 
-// Painted Board world (public site): Yatra One — brush-painted Devanagari
-// display; Anton — wood-type Latin caps; Mukta — Devanagari body face.
-const yatra = Yatra_One({
-  variable: "--font-yatra",
-  subsets: ["latin", "devanagari"],
-  display: "swap",
-  weight: ["400"],
-});
-const anton = Anton({
-  variable: "--font-anton",
-  subsets: ["latin"],
-  display: "swap",
-  weight: ["400"],
-});
 const mukta = Mukta({
   variable: "--font-mukta",
-  subsets: ["latin", "devanagari"],
+  subsets: ["devanagari"],
   display: "swap",
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -37,9 +24,12 @@ export const metadata: Metadata = {
   // translate-this-page prompt from appearing on every refresh.
   other: { google: "notranslate" },
   applicationName: "Pachankaun",
+  ...(process.env.NEXT_PUBLIC_SITE_URL
+    ? { metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL) }
+    : {}),
   title: {
     default: "Pachankaun — Business Profiles",
-    template: "%s",
+    template: "%s | Pachankaun",
   },
   description: "Free business profiles — details tailored to your business category",
 };
@@ -47,16 +37,16 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#4f46e5",
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="hi"
-      className={cn("h-full antialiased", inter.variable, yatra.variable, anton.variable, mukta.variable, "font-sans")}
+      className={cn("h-full antialiased", inter.variable, mukta.variable, "font-sans")}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="flex min-h-full flex-col">
         <LanguageProvider>{children}</LanguageProvider>
       </body>
     </html>

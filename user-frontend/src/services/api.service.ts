@@ -2,7 +2,7 @@
 // Base HTTP client for the user backend API.
 // Auth tokens live in httpOnly cookies set by the backend — no localStorage.
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3004";
+export const API_BASE_URL = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3004";
 
 /** Normalized API error thrown by `apiRequest`. */
 export class ApiError extends Error {
@@ -73,7 +73,9 @@ const NO_RETRY_PATHS = [
 async function doRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = "GET", body } = options;
 
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+  const headers: Record<string, string> = {};
+  if (!isFormData) headers["Content-Type"] = "application/json";
   if (authToken) {
     headers.Authorization = `Bearer ${authToken}`;
   }
@@ -84,7 +86,8 @@ async function doRequest<T>(path: string, options: RequestOptions = {}): Promise
       method,
       headers,
       credentials: "include",
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      cache: "no-store",
+      body: body === undefined ? undefined : isFormData ? body as FormData : JSON.stringify(body),
     });
   } catch {
     throw new ApiError("Unable to reach the server. Please check your connection.", "NETWORK_ERROR");

@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
 import { authStore, useAuthStore } from "@/store/auth.store";
-import { Input } from "@/components/ui/input";
 
 export function RegisterView() {
   const { t } = useLanguage();
@@ -20,9 +19,9 @@ export function RegisterView() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Already signed in -> straight to the business dashboard
+  // Already signed in -> straight to onboarding
   useEffect(() => {
-    if (hydrated && authenticated) router.replace("/dashboard");
+    if (hydrated && authenticated) router.replace("/onboarding");
   }, [hydrated, authenticated, router]);
 
   async function handleSubmit(event: FormEvent) {
@@ -44,100 +43,76 @@ export function RegisterView() {
   }
 
   return (
-    <main className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-slate-950 px-4 py-10">
-      {/* Ambient gradient backdrop (matches login) */}
-      <div aria-hidden className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-32 left-1/2 h-96 w-[42rem] -translate-x-1/2 rounded-full bg-indigo-600/40 blur-3xl" />
-        <div className="absolute -bottom-40 -right-24 h-96 w-96 rounded-full bg-violet-600/30 blur-3xl" />
-        <div className="absolute -bottom-40 -left-24 h-96 w-96 rounded-full bg-sky-600/20 blur-3xl" />
-      </div>
-
-      <div className="relative w-full max-w-sm">
+    <main className="flex min-h-dvh flex-1 flex-col items-center justify-center px-4 py-10">
+      <div className="w-full max-w-sm">
         {/* Brand */}
         <div className="mb-8 flex flex-col items-center text-center">
-          <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-linear-to-br from-indigo-500 to-violet-600 text-2xl font-bold text-white shadow-lg shadow-indigo-950/50">
-            प
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">{t("register.title")}</h1>
-          <p className="mt-1 text-sm text-slate-400">{t("register.subtitle")}</p>
+          <div className="pk-mark mb-4 size-12 rounded-xl text-xl">प</div>
+          <h1 className="text-xl font-semibold tracking-tight">{t("register.title")}</h1>
+          <p className="mt-1 text-sm text-ink-500">{t("register.subtitle")}</p>
         </div>
 
         {/* Card */}
-        <form
-          onSubmit={handleSubmit}
-          className="rounded-2xl border border-white/10 bg-white/[0.07] p-6 shadow-2xl shadow-indigo-950/40 backdrop-blur-xl"
-        >
+        <form onSubmit={handleSubmit} className="pk-card p-6">
           <div className="space-y-4">
             <div>
-              <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-slate-300">
-                {t("register.name")}
-              </label>
-              <Input
+              <label htmlFor="name" className="pk-label">{t("register.name")}</label>
+              <input
                 id="name"
                 type="text"
                 autoComplete="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
                 required
                 minLength={2}
-                className="h-11 border-white/10 bg-white/5 text-white placeholder:text-slate-500 focus-visible:ring-indigo-400/50"
+                className="pk-input"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
               />
             </div>
 
             <div>
-              <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-slate-300">
-                {t("register.email")}
-              </label>
-              <Input
+              <label htmlFor="email" className="pk-label">{t("register.email")}</label>
+              <input
                 id="email"
                 type="email"
                 autoComplete="email"
                 inputMode="email"
+                required
+                className="pk-input"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
-                className="h-11 border-white/10 bg-white/5 text-white placeholder:text-slate-500 focus-visible:ring-indigo-400/50"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-slate-300">
-                {t("register.password")}
-              </label>
-              <Input
+              <label htmlFor="password" className="pk-label">{t("register.password")}</label>
+              <input
                 id="password"
                 type="password"
                 autoComplete="new-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={8}
-                className="h-11 border-white/10 bg-white/5 text-white placeholder:text-slate-500 focus-visible:ring-indigo-400/50"
+                className="pk-input"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
               />
-              <p className="mt-1 text-xs text-slate-500">{t("register.passwordHint")}</p>
+              <p className="pk-help">{t("register.passwordHint")}</p>
             </div>
           </div>
 
           {error ? (
-            <p role="alert" className="mt-4 rounded-lg border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm font-medium text-red-300">
+            <p role="alert" className="mt-4 rounded-(--radius-field) bg-signal-danger-soft px-3 py-2.5 text-sm font-medium text-signal-danger">
               {error}
             </p>
           ) : null}
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="mt-6 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-linear-to-r from-indigo-500 to-violet-600 text-sm font-semibold text-white shadow-lg shadow-indigo-950/50 transition hover:from-indigo-400 hover:to-violet-500 active:scale-[0.99] disabled:opacity-60"
-          >
+          <button type="submit" disabled={submitting} className="pk-btn pk-btn-primary mt-6 w-full">
             {submitting ? <Loader2 className="size-4 animate-spin" /> : null}
             {submitting ? t("register.submitting") : t("register.submit")}
           </button>
 
-          <p className="mt-4 text-center text-sm text-slate-400">
+          <p className="mt-5 text-center text-sm text-ink-500">
             {t("register.haveAccount")}{" "}
-            <Link href="/login" className="font-semibold text-indigo-400 hover:text-indigo-300">
-              {t("register.loginLink")}
-            </Link>
+            <Link href="/login" className="pk-link">{t("register.loginLink")}</Link>
           </p>
         </form>
       </div>

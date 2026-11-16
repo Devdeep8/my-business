@@ -54,7 +54,17 @@ export interface BusinessLink {
   type: LinkType;
   url: string;
   title: string;
-  display_order: number;
+  displayOrder: number;
+}
+
+export type BusinessMediaKind = "logo" | "cover" | "photo" | "video";
+
+export interface BusinessMedia {
+  id: string;
+  url: string;
+  altText: string | null;
+  kind: BusinessMediaKind;
+  sortOrder: number;
 }
 
 export type BusinessStatus = "draft" | "pending_review" | "published" | "rejected";
@@ -66,17 +76,17 @@ export interface Business {
   description: string | null;
   phone: string;
   whatsapp: string | null;
-  website_url: string | null;
+  websiteUrl: string | null;
   address: Record<string, unknown> | null;
   service_area: Record<string, unknown> | null;
   hours: Record<string, unknown> | null;
   status: BusinessStatus;
-  verification_status: "unverified" | "pending" | "verified";
-  completeness_score: number;
-  form_version: number;
+  verificationStatus: "unverified" | "pending" | "verified";
+  completenessScore: number;
+  formVersion: number;
   attributes: Record<string, unknown>;
-  rejection_reason: string | null;
-  primary_category_id: string;
+  rejectionReason: string | null;
+  primaryCategoryId: string;
   links?: BusinessLink[];
   primaryCategory?: { id: string; name_en: string; name_hi: string; slug: string } | null;
 }
@@ -137,4 +147,36 @@ export const businessService = {
   /** GET /api/v1/businesses/me/links — ordered linktree-style links */
   listLinks: () =>
     apiRequest<{ items: BusinessLink[] }>("/api/v1/businesses/me/links"),
+
+  /** POST /api/v1/businesses/me/links — add a link to my profile */
+  createLink: (payload: { type: LinkType; url: string; title: string }) =>
+    apiRequest<BusinessLink>("/api/v1/businesses/me/links", { method: "POST", body: payload }),
+
+  /** DELETE /api/v1/businesses/me/links/:id — remove one of my links */
+  deleteLink: (id: string) =>
+    apiRequest<{ id: string }>(`/api/v1/businesses/me/links/${id}`, { method: "DELETE" }),
+
+  reorderLinks: (ids: string[]) =>
+    apiRequest<{ items: BusinessLink[] }>("/api/v1/businesses/me/links/order", { method: "PATCH", body: { ids } }),
+
+  listMedia: () =>
+    apiRequest<{ items: BusinessMedia[] }>("/api/v1/businesses/me/media"),
+
+  uploadImage: (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return apiRequest<{ url: string; publicId: string; width: number; height: number; format: string; bytes: number }>(
+      "/api/v1/uploads/images",
+      { method: "POST", body: form }
+    );
+  },
+
+  addMedia: (payload: { url: string; kind: BusinessMediaKind; altText?: string }) =>
+    apiRequest<BusinessMedia>("/api/v1/businesses/me/media", { method: "POST", body: payload }),
+
+  updateMedia: (id: string, payload: { kind?: BusinessMediaKind; altText?: string | null }) =>
+    apiRequest<BusinessMedia>(`/api/v1/businesses/me/media/${id}`, { method: "PATCH", body: payload }),
+
+  deleteMedia: (id: string) =>
+    apiRequest<{ id: string }>(`/api/v1/businesses/me/media/${id}`, { method: "DELETE" }),
 };

@@ -38,7 +38,7 @@ const coreProfile = (business) => ({
   address: business.address,
   hours: business.hours,
   phone: business.phone,
-  website_url: business.website_url
+  websiteUrl: business.websiteUrl
 });
 
 export class CreateBusinessHandler extends BaseHandler {
@@ -184,7 +184,7 @@ export class UpdateMyBusinessHandler extends BaseHandler {
       hours: hours ?? business.hours,
       phone: phone ?? business.phone,
       whatsapp: whatsapp ?? business.whatsapp,
-      website_url: websiteUrl ?? business.website_url
+      websiteUrl: websiteUrl ?? business.websiteUrl
     };
 
     const form = await resolvedForm(this, business.primaryCategoryId);
@@ -199,7 +199,7 @@ export class UpdateMyBusinessHandler extends BaseHandler {
     await business.update({
       ...draft,
       attributes: mergedAttributes,
-      completeness_score: completeness,
+      completenessScore: completeness,
       status: business.status === 'rejected' ? 'draft' : business.status
     }, { transaction: this.dbTransaction });
 
@@ -230,7 +230,7 @@ export class SubmitMyBusinessHandler extends BaseHandler {
     const form = await resolvedForm(this, business.primaryCategoryId);
     validateAttributes(this.traceId, form.fields, business.attributes || {});
 
-    await business.update({ status: 'pending_review', rejection_reason: null }, { transaction: this.dbTransaction });
+    await business.update({ status: 'pending_review', rejectionReason: null }, { transaction: this.dbTransaction });
     return business.reload({ transaction: this.dbTransaction });
   }
 }
@@ -302,5 +302,53 @@ export class DeleteBusinessLinkHandler extends BaseHandler {
       throw new AppError(Errors.NOT_FOUND, { traceId: this.traceId, message: 'Link not found' });
     }
     return { id };
+  }
+}
+
+export class ReorderMyBusinessLinksHandler extends BaseHandler {
+  /**
+   * Rewrite display_order from an explicit, complete ordering of link ids
+   * (drag-and-drop on the dashboard). The id list must match my links exactly
+   * — no partial reorders, no ids belonging to another business.
+   */
+  async run () {
+    const { ids } = this.args;
+    const business = await Business.findOne({
+      where: { ownerUserId: this.context.userId },
+      attributes: ['id'],
+      transaction: this.dbTransaction
+    });
+    if (!business) {
+      throw new AppError(Errors.NOT_FOUND, { traceId: this.traceId, message: 'No business profile yet' });
+    }
+
+    const links = await BusinessLink.findAll({
+      where: { businessId: business.id },
+      attributes: ['id'],
+      transaction: this.dbTransaction
+    });
+    const mine = new Set(links.map((link) => link.id));
+    const sameSet = ids.length === mine.size && ids.every((id) => mine.has(id));
+    if (!sameSet) {
+      throw new AppError(Errors.INVALID_INPUT, {
+        traceId: this.traceId,
+        message: 'Link order must list every link of this business exactly once'
+      });
+    }
+
+    // One UPDATE per position inside the request transaction
+    for (const [index, id] of ids.entries()) {
+      await BusinessLink.update(
+        { displayOrder: index },
+        { where: { id, businessId: business.id }, transaction: this.dbTransaction }
+      );
+    }
+
+    const reordered = await BusinessLink.findAll({
+      where: { businessId: business.id },
+      order: [['displayOrder', 'ASC']],
+      transaction: this.dbTransaction
+    });
+    return { items: reordered };
   }
 }
