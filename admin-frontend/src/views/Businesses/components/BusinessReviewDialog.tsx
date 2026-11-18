@@ -25,11 +25,59 @@ type Props = {
   onActioned: () => void;
 };
 
-function formatValue (value: unknown): string {
+function formatLabel (key: string): string {
+  return key.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function formatObject (value: Record<string, unknown>, key?: string): string {
+  if (key === "address") {
+    const parts = [value.line1, value.city, value.state]
+      .filter((part): part is string => typeof part === "string" && part.trim() !== "")
+      .join(", ");
+    const pincode = typeof value.pincode === "string" || typeof value.pincode === "number"
+      ? String(value.pincode)
+      : "";
+    return [parts, pincode].filter(Boolean).join(pincode ? " - " : "");
+  }
+
+  const entries = Object.entries(value).filter(([, entry]) => entry !== null && entry !== undefined && entry !== "");
+  if (entries.length === 0) return "—";
+
+  const nameEntry = entries.find(([entryKey]) => ["name", "title", "item_name", "dish_name", "label"].includes(entryKey));
+  if (nameEntry) {
+    const [nameKey, nameValue] = nameEntry;
+    const details = entries
+      .filter(([entryKey]) => entryKey !== nameKey)
+      .map(([entryKey, entry]) => {
+        const formatted = Array.isArray(entry) ? entry.join(", ") : String(entry);
+        if (["price", "cost", "amount"].includes(entryKey)) {
+          return formatted.startsWith("₹") ? formatted : `₹${formatted}`;
+        }
+        return `${formatLabel(entryKey)}: ${formatted}`;
+      });
+    return [String(nameValue), ...details].join(details.length ? " — " : "");
+  }
+
+  return entries
+    .map(([entryKey, entry]) => {
+      const formatted = Array.isArray(entry) ? entry.join(", ") : String(entry);
+      return `${formatLabel(entryKey)}: ${formatted}`;
+    })
+    .join("; ");
+}
+
+function formatValue (value: unknown, key?: string): string {
   if (value === null || value === undefined || value === "") return "—";
   if (typeof value === "boolean") return value ? "Yes" : "No";
-  if (Array.isArray(value)) return value.length ? value.join(", ") : "—";
-  if (typeof value === "object") return JSON.stringify(value);
+  if (Array.isArray(value)) {
+    if (value.length === 0) return "—";
+    return value
+      .map((item) => typeof item === "object" && item !== null
+        ? formatObject(item as Record<string, unknown>, key)
+        : String(item))
+      .join("; ");
+  }
+  if (typeof value === "object") return formatObject(value as Record<string, unknown>, key);
   return String(value);
 }
 
@@ -124,7 +172,7 @@ export function BusinessReviewDialog ({ business, onClose, onActioned }: Props) 
               {business.address && (
                 <div className="col-span-2">
                   <dt className="text-muted-foreground">Address</dt>
-                  <dd>{formatValue(business.address)}</dd>
+                  <dd>{formatValue(business.address, "address")}</dd>
                 </div>
               )}
             </dl>
@@ -136,7 +184,7 @@ export function BusinessReviewDialog ({ business, onClose, onActioned }: Props) 
                   {attributeEntries.map(([key, value]) => (
                     <div key={key}>
                       <dt className="text-muted-foreground capitalize">{key.replace(/_/g, " ")}</dt>
-                      <dd>{formatValue(value)}</dd>
+                      <dd className="break-words">{formatValue(value, key)}</dd>
                     </div>
                   ))}
                 </dl>
