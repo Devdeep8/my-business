@@ -2,6 +2,9 @@ import { BaseHandler } from '@src/libs/base.handler.js';
 import { AppError } from '@src/errors/app.error.js';
 import { emitEvent } from '@src/events/event.bus.js';
 import { EVENTS } from '@src/events/event.types.js';
+import db from '@src/db/models/index.js';
+
+const { FieldDefinition } = db;
 
 const CATEGORY_ATTRIBUTES = [
   'id',
@@ -39,7 +42,10 @@ export class CreateCategoryHandler extends BaseHandler {
       name_en: args.name_en,
       name_hi: args.name_hi,
       slug: args.slug,
-      parentId: args.parentId
+      parentId: args.parentId,
+      displayOrder: args.displayOrder,
+      isActive: args.isActive,
+      isLeaf: args.isLeaf
     };
   }
 
@@ -116,5 +122,102 @@ export class CreateCategoryHandler extends BaseHandler {
     }, this.context);
 
     return category;
+  }
+}
+
+const serializeField = (field) => ({
+  id: field.id,
+  categoryId: field.categoryId,
+  key: field.key,
+  labelEn: field.label_en,
+  labelHi: field.label_hi,
+  type: field.type,
+  options: field.options?.options || null,
+  validation: field.validation || { required: false },
+  helpTextEn: field.help_text_en,
+  helpTextHi: field.help_text_hi,
+  displayOrder: field.display_order,
+  showOnProfile: field.show_on_profile,
+  visibleIf: field.visible_if,
+  isActive: field.is_active
+});
+
+export class ListCategoryFieldsHandler extends BaseHandler {
+  async run() {
+    const fields = await FieldDefinition.findAll({
+      where: { categoryId: this.args.categoryId },
+      order: [['displayOrder', 'ASC'], ['createdAt', 'ASC']],
+      transaction: this.dbTransaction
+    });
+    return { items: fields.map(serializeField) };
+  }
+}
+
+export class CreateCategoryFieldHandler extends BaseHandler {
+  async run() {
+    const { categoryId } = this.args;
+    const category = await db.Category.findByPk(categoryId, { transaction: this.dbTransaction });
+    if (!category) throw AppError.validation('Category does not exist');
+
+    const key = String(this.args.key ?? '').trim();
+    if (!/^[a-z][a-z0-9_]*$/.test(key)) {
+      throw AppError.validation('Field key must start with a letter and use only lowercase letters, numbers, and underscores');
+    }
+
+    try {
+      const field = await FieldDefinition.create({
+        categoryId,
+        key,
+        label_en: this.args.labelEn,
+        label_hi: this.args.labelHi,
+        type: this.args.type,
+        options: this.args.options?.length ? { options: this.args.options } : null,
+        validation: this.args.validation || { required: false },
+        help_text_en: this.args.helpTextEn || null,
+        help_text_hi: this.args.helpTextHi || null,
+        display_order: this.args.displayOrder ?? 0,
+        show_on_profile: this.args.showOnProfile !== false,
+        visible_if: this.args.visibleIf || null,
+        is_active: this.args.isActive !== false
+      }, { transaction: this.dbTransaction });
+      return serializeField(field);
+    } catch (error) {
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        throw AppError.conflict('A field with this key already exists in the category');
+      }
+      throw error;
+    }
+  }
+}
+
+export class UpdateCategoryFieldHandler extends BaseHandler {
+  async run() {
+    const field = await FieldDefinition.findByPk(this.args.id, { transaction: this.dbTransaction });
+    if (!field) throw AppError.notFound('Field not found');
+
+    await field.update({
+      ...(this.args.labelEn !== undefined && { label_en: this.args.labelEn }),
+      ...(this.args.labelHi !== undefined && { label_hi: this.args.labelHi }),
+      ...(this.args.type !== undefined && { type: this.args.type }),
+      ...(this.args.options !== undefined && { options: this.args.options?.length ? { options: this.args.options } : null }),
+      ...(this.args.validation !== undefined && { validation: this.args.validation }),
+      ...(this.args.helpTextEn !== undefined && { help_text_en: this.args.helpTextEn || null }),
+      ...(this.args.helpTextHi !== undefined && { help_text_hi: this.args.helpTextHi || null }),
+      ...(this.args.displayOrder !== undefined && { display_order: this.args.displayOrder }),
+      ...(this.args.showOnProfile !== undefined && { show_on_profile: this.args.showOnProfile }),
+      ...(this.args.visibleIf !== undefined && { visible_if: this.args.visibleIf || null }),
+      ...(this.args.isActive !== undefined && { is_active: this.args.isActive })
+    }, { transaction: this.dbTransaction });
+
+    return serializeField(field);
+  }
+}
+
+export class DeleteCategoryFieldHandler extends BaseHandler {
+  async run() {
+    const field = await FieldDefinition.findByPk(this.args.id, { transaction: this.dbTransaction });
+    if (!field) throw AppError.notFound('Field not found');
+    await field.destroy({ transaction: this.dbTransaction });
+    return { id: this.args.id };
   }
 }

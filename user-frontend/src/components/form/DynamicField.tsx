@@ -51,7 +51,7 @@ export function DynamicField({ field, value, error, disabled, onChange }: Dynami
         </p>
       ) : null}
 
-      <FieldInput field={field} value={value} invalid={invalid} disabled={disabled} onChange={onChange} />
+      <FieldInput field={field} value={value} invalid={invalid} disabled={disabled} lang={lang} onChange={onChange} />
 
       {error ? (
         <p id={errorId} className="text-xs font-medium text-signal-danger">
@@ -66,12 +66,13 @@ export function DynamicField({ field, value, error, disabled, onChange }: Dynami
 const chipClasses = (selected: boolean) => `pk-chip ${selected ? "pk-chip-on" : "pk-chip-off"}`;
 
 function FieldInput({
-  field, value, invalid, disabled, onChange
+  field, value, invalid, disabled, lang, onChange
 }: {
   field: FieldDefinition;
   value: unknown;
   invalid: boolean;
   disabled?: boolean;
+  lang: Language;
   onChange: (key: string, value: unknown) => void;
 }) {
   switch (field.type) {
@@ -176,8 +177,60 @@ function FieldInput({
         </div>
       );
 
-    // time_range / address / image / repeater are structured inputs; MVP
-    // stores JSON — render a plain text input for now and specialize later.
+    case "repeater": {
+      const rows = Array.isArray(value) ? value as Record<string, unknown>[] : [];
+      const subfields = field.validation?.repeater_fields ?? [];
+
+      const updateRow = (index: number, subKey: string, subValue: unknown) => {
+        const next = rows.map((row, rowIndex) => rowIndex === index ? { ...row, [subKey]: subValue } : row);
+        onChange(field.key, next);
+      };
+
+      return (
+        <div className="space-y-3">
+          {rows.map((row, index) => (
+            <div key={index} className="rounded-(--radius-card) border border-ink-200 bg-white p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-xs font-semibold text-ink-500">Item {index + 1}</span>
+                <button type="button" className="text-xs font-medium text-signal-danger" onClick={() => onChange(field.key, rows.filter((_, rowIndex) => rowIndex !== index))}>Remove</button>
+              </div>
+              {subfields.length > 0 ? (
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {subfields.map((subfield) => {
+                    const subLabel = subfield.label[lang] || subfield.label.en;
+                    const subValue = row[subfield.key];
+                    return (
+                      <label key={subfield.key} className="space-y-1 text-xs font-medium">
+                        <span>{subLabel}{subfield.required ? <span className="ml-0.5 text-angaar-600">*</span> : null}</span>
+                        {subfield.type === "number" ? (
+                          <Input type="number" value={subValue === null || subValue === undefined ? "" : String(subValue)} onChange={(event) => updateRow(index, subfield.key, event.target.value === "" ? null : Number(event.target.value))} />
+                        ) : subfield.type === "boolean" ? (
+                          <select className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm" value={String(Boolean(subValue))} onChange={(event) => updateRow(index, subfield.key, event.target.value === "true")}>
+                            <option value="true">Yes</option><option value="false">No</option>
+                          </select>
+                        ) : subfield.type === "select" ? (
+                          <select className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm" value={typeof subValue === "string" ? subValue : ""} onChange={(event) => updateRow(index, subfield.key, event.target.value || null)}>
+                            <option value="">Select</option>{(subfield.options || []).map((option) => <option key={option} value={option}>{option}</option>)}
+                          </select>
+                        ) : (
+                          <Input type={subfield.type === "url" ? "url" : "text"} value={typeof subValue === "string" ? subValue : ""} onChange={(event) => updateRow(index, subfield.key, event.target.value)} />
+                        )}
+                      </label>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-xs text-ink-500">Configure repeater columns in Admin → Categories.</p>
+              )}
+            </div>
+          ))}
+          <button type="button" className="pk-chip pk-chip-off" onClick={() => onChange(field.key, [...rows, {}])}>+ Add item</button>
+        </div>
+      );
+    }
+
+    // time_range / address / image are structured inputs; MVP stores JSON
+    // as a plain text representation until dedicated controls are added.
     default:
       return (
         <Input

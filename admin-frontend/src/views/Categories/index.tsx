@@ -22,6 +22,7 @@ import {
 import { ApiError } from "@/services/api.service";
 import { categoriesService, type Category } from "@/services/categories.service";
 import { CategoryFormDialog } from "@/views/Categories/components/CategoryFormDialog";
+import { CategoryFieldsDialog } from "@/views/Categories/components/CategoryFieldsDialog";
 
 type CategoryRow = {
   category: Category;
@@ -63,6 +64,7 @@ export function Categories() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
+  const [fieldsCategory, setFieldsCategory] = useState<Category | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -143,13 +145,14 @@ export function Categories() {
                   <TableHead>Parent</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Business selection</TableHead>
+                  <TableHead>Form</TableHead>
                   <TableHead className="text-right">Order</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {rows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                    <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                       No categories yet. Create your first category.
                     </TableCell>
                   </TableRow>
@@ -176,6 +179,13 @@ export function Categories() {
                         <TableCell className="text-muted-foreground">
                           {category.isLeaf ? "Selectable" : "Not selectable"}
                         </TableCell>
+                        <TableCell>
+                          {category.isLeaf && (
+                            <Button size="sm" variant="outline" onClick={() => setFieldsCategory(category)}>
+                              Configure form
+                            </Button>
+                          )}
+                        </TableCell>
                         <TableCell className="text-right">{category.displayOrder}</TableCell>
                       </TableRow>
                     );
@@ -186,6 +196,12 @@ export function Categories() {
           )}
         </CardContent>
       </Card>
+
+      <CategoryFieldsDialog
+        category={fieldsCategory}
+        open={fieldsCategory !== null}
+        onClose={() => setFieldsCategory(null)}
+      />
 
       <CategoryFormDialog
         open={formOpen}

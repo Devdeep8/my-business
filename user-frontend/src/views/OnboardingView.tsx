@@ -50,6 +50,7 @@ export function OnboardingView() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("+91");
   const [description, setDescription] = useState("");
+  const [address, setAddress] = useState({ line1: "", city: "", state: "", pincode: "" });
 
   // Step 2 — category
   const [tree, setTree] = useState<CategoryNode[]>([]);
@@ -80,6 +81,14 @@ export function OnboardingView() {
         setName(existing.name);
         setPhone(existing.phone);
         setDescription(existing.description || "");
+        if (existing.address) {
+          setAddress({
+            line1: String(existing.address.line1 || ""),
+            city: String(existing.address.city || ""),
+            state: String(existing.address.state || ""),
+            pincode: String(existing.address.pincode || "")
+          });
+        }
         setCategoryId(existing.primaryCategoryId);
         setAttributes(existing.attributes || {});
         setStep("review");
@@ -149,6 +158,9 @@ export function OnboardingView() {
     const errs: string[] = [];
     if (name.trim().length < 2) errs.push(t("onboarding.errors.name"));
     if (!/^\+91[0-9]{10}$/.test(phone.trim())) errs.push(t("onboarding.errors.phone"));
+    if (!address.line1.trim() || !address.city.trim() || !address.state.trim() || !/^\d{6}$/.test(address.pincode.trim())) {
+      errs.push("Please enter a complete address with a 6-digit pincode.");
+    }
     setErrors(errs);
     return errs.length === 0;
   };
@@ -169,6 +181,15 @@ export function OnboardingView() {
       if (field.type === "url" && !/^https?:\/\/.+/.test(String(value))) {
         errs[field.key] = t("onboarding.errors.url");
       }
+      if (field.type === "repeater" && Array.isArray(value)) {
+        const subfields = field.validation?.repeater_fields || [];
+        const missingSubfield = subfields.some((subfield) => subfield.required && value.some((row) => {
+          if (!row || typeof row !== "object") return true;
+          const subValue = (row as Record<string, unknown>)[subfield.key];
+          return subValue === null || subValue === undefined || subValue === "";
+        }));
+        if (missingSubfield) errs[field.key] = t("onboarding.errors.required");
+      }
     }
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
@@ -186,6 +207,7 @@ export function OnboardingView() {
           primaryCategoryId: categoryId,
           phone: phone.trim(),
           description: description.trim() || undefined,
+          address,
           attributes
         });
       } else if (business) {
@@ -193,6 +215,7 @@ export function OnboardingView() {
           name: name.trim(),
           phone: phone.trim(),
           description: description.trim(),
+          address,
           attributes
         });
       }
@@ -294,6 +317,17 @@ export function OnboardingView() {
                   <Input id="biz-phone" inputMode="tel" value={phone} autoComplete="tel"
                     onChange={(e) => setPhone(e.target.value)} />
                   <p className="text-xs text-ink-400">+91 XXXXXXXXXX</p>
+                </div>
+                <div className="space-y-2 rounded-(--radius-card) border border-ink-200 p-3">
+                  <p className="text-sm font-medium">Business location</p>
+                  <div className="space-y-2">
+                    <Input placeholder="Street / shop / building" value={address.line1} onChange={(event) => setAddress((prev) => ({ ...prev, line1: event.target.value }))} />
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <Input placeholder="City" value={address.city} onChange={(event) => setAddress((prev) => ({ ...prev, city: event.target.value }))} />
+                      <Input placeholder="State" value={address.state} onChange={(event) => setAddress((prev) => ({ ...prev, state: event.target.value }))} />
+                    </div>
+                    <Input inputMode="numeric" placeholder="Pincode" value={address.pincode} maxLength={6} onChange={(event) => setAddress((prev) => ({ ...prev, pincode: event.target.value.replace(/[^0-9]/g, "") }))} />
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   <label htmlFor="biz-desc" className="block text-sm font-medium">

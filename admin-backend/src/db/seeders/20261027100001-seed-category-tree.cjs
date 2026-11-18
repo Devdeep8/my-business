@@ -17,7 +17,15 @@ const CATEGORIES = [
   { id: '11111111-0000-0000-0000-000000000012', name_en: 'Grocery Store', name_hi: 'किराना दुकान', slug: 'grocery-store', parent: 10, order: 1, leaf: true },
   { id: '11111111-0000-0000-0000-000000000013', name_en: 'Home Services', name_hi: 'होम सर्विसेज', slug: 'home-services', parent: null, order: 6 },
   { id: '11111111-0000-0000-0000-000000000014', name_en: 'Plumber', name_hi: 'प्लंबर', slug: 'plumber', parent: 12, order: 1, leaf: true },
-  { id: '11111111-0000-0000-0000-000000000015', name_en: 'Electrician', name_hi: 'इलेक्ट्रीशियन', slug: 'electrician', parent: 12, order: 2, leaf: true }
+  { id: '11111111-0000-0000-0000-000000000015', name_en: 'Electrician', name_hi: 'इलेक्ट्रीशियन', slug: 'electrician', parent: 12, order: 2, leaf: true },
+  { id: '11111111-0000-0000-0000-000000000016', name_en: 'Clothing Store', name_hi: 'कपड़ों की दुकान', slug: 'clothing-store', parent: 10, order: 2, leaf: true },
+  { id: '11111111-0000-0000-0000-000000000017', name_en: 'Pharmacy', name_hi: 'फार्मेसी', slug: 'pharmacy', parent: 10, order: 3, leaf: true },
+  { id: '11111111-0000-0000-0000-000000000018', name_en: 'Gym & Fitness', name_hi: 'जिम एवं फिटनेस', slug: 'gym-fitness', parent: null, order: 7 },
+  { id: '11111111-0000-0000-0000-000000000019', name_en: 'Fitness Centre', name_hi: 'फिटनेस सेंटर', slug: 'fitness-centre', parent: 17, order: 1, leaf: true },
+  { id: '11111111-0000-0000-0000-000000000020', name_en: 'Automobile Service', name_hi: 'ऑटोमोबाइल सेवा', slug: 'automobile-service', parent: 12, order: 3, leaf: true },
+  { id: '11111111-0000-0000-0000-000000000021', name_en: 'Electronics Store', name_hi: 'इलेक्ट्रॉनिक्स दुकान', slug: 'electronics-store', parent: 10, order: 4, leaf: true },
+  { id: '11111111-0000-0000-0000-000000000022', name_en: 'Hotel', name_hi: 'होटल', slug: 'hotel', parent: null, order: 8 },
+  { id: '11111111-0000-0000-0000-000000000023', name_en: 'Hotel / Guest House', name_hi: 'होटल / गेस्ट हाउस', slug: 'hotel-guest-house', parent: 21, order: 1, leaf: true }
 ];
 
 module.exports = {

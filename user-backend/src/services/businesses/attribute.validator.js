@@ -85,10 +85,29 @@ const checkValue = (traceId, definition, value) => {
 
     // time_range / address / image / repeater are structured values rendered
     // by dedicated form components; MVP stores them shape-checked loosely.
+    case 'repeater':
+      if (!Array.isArray(value)) throw invalid(traceId, key, 'Must be a list of items');
+      if (validation.minItems && value.length < validation.minItems) {
+        throw invalid(traceId, key, `Add at least ${validation.minItems} items`);
+      }
+      if (validation.maxItems && value.length > validation.maxItems) {
+        throw invalid(traceId, key, `Add at most ${validation.maxItems} items`);
+      }
+      for (const item of value) {
+        if (!item || typeof item !== 'object' || Array.isArray(item)) {
+          throw invalid(traceId, key, 'Every repeater item must be an object');
+        }
+        for (const subfield of validation.repeater_fields || []) {
+          if (subfield.required && (item[subfield.key] === null || item[subfield.key] === undefined || item[subfield.key] === '')) {
+            throw invalid(traceId, key, `${subfield.label?.en || subfield.key} is required`);
+          }
+        }
+      }
+      break;
+
     case 'time_range':
     case 'address':
     case 'image':
-    case 'repeater':
       if (typeof value !== 'object') throw invalid(traceId, key, 'Invalid value');
       break;
 

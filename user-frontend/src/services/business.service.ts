@@ -8,6 +8,15 @@ export type FieldType =
   | "text" | "number" | "select" | "multi_select" | "boolean"
   | "time_range" | "address" | "phone" | "url" | "image" | "repeater";
 
+/** A column inside a repeater field such as products or menu items. */
+export interface RepeaterField {
+  key: string;
+  label: { en: string; hi: string };
+  type: "text" | "number" | "select" | "boolean" | "url";
+  required?: boolean;
+  options?: string[];
+}
+
 /** One field of a category's resolved form — comes from the DB, never hardcoded. */
 export interface FieldDefinition {
   key: string;
@@ -23,6 +32,7 @@ export interface FieldDefinition {
     maxItems?: number;
     maxLength?: number;
     pattern?: string;
+    repeater_fields?: RepeaterField[];
   };
   show_on_profile: boolean;
   visible_if: { field: string; equals: unknown } | null;
