@@ -5,6 +5,7 @@
 import {
   IconArticle,
   IconBuildingStore,
+  IconCategory,
   IconLayoutDashboard,
   IconNotes,
   IconShieldLock,
@@ -38,6 +39,12 @@ export const NAV_SECTIONS: NavSection[] = [
     title: "Businesses",
     url: "/businesses",
     icon: IconBuildingStore,
+    permission: "businesses.view"
+  },
+  {
+    title: "Categories",
+    url: "/categories",
+    icon: IconCategory,
     permission: "businesses.view"
   },
   {

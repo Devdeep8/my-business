@@ -9,6 +9,7 @@ import auditLogsRoutes from './auditLogs.routes.js';
 import adminUsersRoutes from './adminUsers.routes.js';
 import usersRoutes from './users.routes.js';
 import businessesRoutes from './businesses.routes.js';
+import categoriesRoutes from './categories.routes.js';
 
 const router = Router();
 
@@ -22,5 +23,6 @@ router.use('/audit-logs', auditLogsRoutes);
 router.use('/admin-users', adminUsersRoutes);
 router.use('/users', usersRoutes);
 router.use('/businesses', businessesRoutes);
+router.use('/categories', categoriesRoutes);
 
 export default router;
